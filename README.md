@@ -2,7 +2,7 @@
 
 [[Arxiv]](https://arxiv.org/abs/2603.00527)
 
-This repository provides the official implementation of the paper [TP-Spikformer: Token Pruned Spiking Transformer](https://arxiv.org/abs/2603.00527) (ICLR 2026).
+This repository provides the official implementation of the paper [TP-Spikformer: Token Pruned Spiking Transformer](https://arxiv.org/abs/2603.00527) **(ICLR 2026)**.
 
 ## Abstract
 
@@ -161,11 +161,11 @@ torchrun --nproc_per_node=8 --master_port=29501 sdtv3_drop/main_finetune.py --da
 
 ## Modify token retention ratio
 
-TP-Spikformer scores each spatial token with a **spatiotemporal information-retaining (IR) criterion**. The highest-scoring tokens are treated as **informative**: they go through the full attention / FFN path. The rest follow a **block-level early stopping** path so computation is reduced without dropping tokens from the tensor layout. In code this is implemented with **`torch.topk`**: only the top **\(k \times k\)** tokens (for a square grid of side \(k\) on the current feature map) get the expensive path; **\(k\)** is what you change to adjust the **retention strength**.
+TP-Spikformer scores each spatial token with a **spatiotemporal information-retaining (IR) criterion**. The highest-scoring tokens are treated as **informative**: they go through the full attention / FFN path. The rest follow a **block-level early stopping** path so computation is reduced without dropping tokens from the tensor layout. In code this is implemented with **`torch.topk`**: only the top $k \times k$ tokens (for a square grid of side $k$ on the current feature map) get the expensive path; $k$ is what you change to adjust the **retention strength**.
 
-Roughly, for a feature map of size **\(H \times W\)**, the fraction of tokens that receive the full block is about **\((k^2)/(H \cdot W)\)** (exact counts follow `topk` after flattening). **Larger \(k\)** → more tokens retained → higher accuracy and cost; **smaller \(k\)** → more aggressive pruning → lower cost.
+Roughly, for a feature map of size $H \times W$, the fraction of tokens that receive the full block is about $(k^2)/(H \cdot W)$ (exact counts follow `topk` after flattening). Larger $k$ → more tokens retained → higher accuracy and cost; smaller $k$ → more aggressive pruning → lower cost.
 
-Where to edit **\(k\)** (per model family):
+Where to edit $k$ (per model family):
 
 | Codebase | File | Parameter | Meaning |
 |----------|------|-----------|---------|
