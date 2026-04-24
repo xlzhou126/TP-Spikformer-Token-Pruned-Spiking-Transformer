@@ -9,8 +9,6 @@ from collections import OrderedDict
 from contextlib import suppress
 from datetime import datetime
 from spikingjelly.clock_driven import functional
-from spikingjelly.datasets.cifar10_dvs import CIFAR10DVS
-from spikingjelly.datasets.dvs128_gesture import DVS128Gesture
 
 import torch
 import torch.nn as nn
@@ -29,7 +27,7 @@ from timm.utils import *
 from timm.optim import create_optimizer_v2, optimizer_kwargs
 from timm.scheduler import create_scheduler
 from timm.utils import ApexScaler, NativeScaler
-import model, dvs_utils
+import model
 
 from ptflops import get_model_complexity_info
 try:
@@ -735,18 +733,6 @@ parser.add_argument(
     help="disable fast prefetcher",
 )
 parser.add_argument(
-    "--dvs-aug",
-    action="store_true",
-    default=False,
-    help="disable fast prefetcher",
-)
-parser.add_argument(
-    "--dvs-trival-aug",
-    action="store_true",
-    default=False,
-    help="disable fast prefetcher",
-)
-parser.add_argument(
     "--save-qkv",
     action="store_true",
     default=False,
@@ -780,7 +766,7 @@ parser.add_argument(
     metavar="N",
     help="Test/inference time augmentation (oversampling) factor. 0=None (default: 0)",
 )
-parser.add_argument("--local_rank", default=0, type=int)
+parser.add_argument("--local_rank", "--local-rank", default=0, type=int)
 parser.add_argument(
     "--device",
     default="cuda",
@@ -831,6 +817,9 @@ def _parse_args():
     # The main arg parser parses the rest of the args, the usual
     # defaults will have been overridden if config file specified.
     args = parser.parse_args(remaining)
+    # torchrun usually exports LOCAL_RANK; prefer it to avoid duplicated GPU binding.
+    if "LOCAL_RANK" in os.environ:
+        args.local_rank = int(os.environ["LOCAL_RANK"])
 
     # Cache the args as a text string to save them in the output dir later
     args_text = yaml.safe_dump(args.__dict__, default_flow_style=False)
@@ -851,11 +840,30 @@ def main():
     args.world_size = 1
     args.rank = 0  # global rank
     if args.distributed:
+        local_world_size = int(os.environ.get("LOCAL_WORLD_SIZE", "1"))
+        if torch.cuda.is_available():
+            visible_gpus = torch.cuda.device_count()
+            if local_world_size > visible_gpus:
+                raise RuntimeError(
+                    f"Invalid launch: LOCAL_WORLD_SIZE={local_world_size} "
+                    f"but only {visible_gpus} visible CUDA devices. "
+                    "Please set --nproc_per_node to visible GPU count, or set CUDA_VISIBLE_DEVICES properly."
+                )
+            if args.local_rank >= visible_gpus:
+                args.local_rank = args.local_rank % visible_gpus
         args.device = "cuda:%d" % args.local_rank
         torch.cuda.set_device(args.local_rank)
         torch.distributed.init_process_group(backend="nccl", init_method="env://")
         args.world_size = torch.distributed.get_world_size()
         args.rank = torch.distributed.get_rank()
+        if args.local_rank == 0:
+            _logger.info(
+                "DDP env - WORLD_SIZE=%s LOCAL_WORLD_SIZE=%s LOCAL_RANK=%s CUDA_VISIBLE_DEVICES=%s",
+                os.environ.get("WORLD_SIZE"),
+                os.environ.get("LOCAL_WORLD_SIZE"),
+                os.environ.get("LOCAL_RANK"),
+                os.environ.get("CUDA_VISIBLE_DEVICES", "<all>"),
+            )
         _logger.info(
             "Training in distributed mode with multiple processes, 1 GPU per process. Process %d, total %d."
             % (args.rank, args.world_size)
@@ -891,10 +899,6 @@ def main():
     torch.cuda.manual_seed_all(args.seed)
     random_seed(args.seed, args.rank)
 
-    args.dvs_mode = False
-    if args.dataset in ["cifar10-dvs-tet", "cifar10-dvs"]:
-        args.dvs_mode = True
-
     model = create_model(
         args.model,
         T=args.time_steps,
@@ -916,7 +920,6 @@ def main():
         depths=args.layer,
         sr_ratios=1,
         spike_mode=args.spike_mode,
-        dvs_mode=args.dvs_mode,
         TET=args.TET,
     ) # .cuda().eval()
         
@@ -1034,48 +1037,17 @@ def main():
         # NOTE: EMA model does not need to be wrapped by DDP
 
     # create the train and eval datasets
-    dataset_eval = None, None
-    if args.dataset == "cifar10-dvs-tet":
-        dataset_eval = dvs_utils.DVSCifar10(
-            root=os.path.join(args.data_dir, "test"),
-            train=False,
-        )
-    elif args.dataset == "cifar10-dvs":
-        dataset = CIFAR10DVS(
-            args.data_dir,
-            data_type="frame",
-            frames_number=args.time_steps,
-            split_by="number",
-        )
-        _, dataset_eval = dvs_utils.split_to_train_test_set(0.9, dataset, 10)
-    elif args.dataset == "gesture":
-        dataset_eval = DVS128Gesture(
-            args.data_dir,
-            train=False,
-            data_type="frame",
-            frames_number=args.time_steps,
-            split_by="number",
-        )
-    else:
-        dataset_eval = create_dataset(
-            args.dataset,
-            root=args.data_dir,
-            split=args.val_split,
-            is_training=False,
-            batch_size=args.batch_size,
-            # download=True,
-        )
+    dataset_eval = create_dataset(
+        args.dataset,
+        root=args.data_dir,
+        split=args.val_split,
+        is_training=False,
+        batch_size=args.batch_size,
+        # download=True,
+    )
 
     loader_eval = None
-    if args.dataset in dvs_utils.DVS_DATASET:
-        loader_eval = torch.utils.data.DataLoader(
-            dataset_eval,
-            batch_size=args.batch_size,
-            shuffle=False,
-            num_workers=args.workers,
-            pin_memory=True,
-        )
-    elif args.dataset == "imagenet" and args.large_valid:
+    if args.dataset == "imagenet" and args.large_valid:
         dataset_eval.transform = transforms.Compose(
             [
                 transforms.Resize(320),
