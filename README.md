@@ -90,7 +90,7 @@ python run.py --task qk-train --launcher torchrun --nproc_per_node 8 --master_po
   --epochs 50 \
   --blr 5e-5 \
   --min_lr 1e-7 \
-  --finetune //path/to/checkpoint.pth
+  --finetune /path/to/checkpoint.pth
 ```
 
 ### 2) Evaluate QKFormer
