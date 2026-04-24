@@ -17,7 +17,17 @@ Spiking neural networks (SNNs) offer an energy-efficient alternative to traditio
 - `sdtv3_drop`: SDTv3 fine-tuning and evaluation scripts.
 - `run.py`: one unified entrypoint; pass `--launcher torchrun` and set `--nproc_per_node` to the number of GPUs you use.
 
+## Pretrained weights
 
+This repository **does not host baseline checkpoints**. Download ImageNet (or task-specific) **pretrained weights from the original model releases** and pass them to `--finetune` / `--resume` as in the quick-start commands for training-free evaluation. Architecture definitions here follow those projects, so weights should be taken from the matching codebase.
+
+| Model family | Original code & checkpoints |
+|--------------|------------------------------|
+| **QKFormer** | [zhouchenlin2096/QKFormer](https://github.com/zhouchenlin2096/QKFormer) |
+| **Spike-driven Transformer (V1)** | [BICLab/Spike-Driven-Transformer](https://github.com/BICLab/Spike-Driven-Transformer) |
+| **Spike-driven Transformer V3** | [BICLab/Spike-Driven-Transformer-V3](https://github.com/BICLab/Spike-Driven-Transformer-V3) |
+
+For **Spikformer** (used in the paper for CIFAR series.), see the official release at [ZK-Zhou/spikformer](https://github.com/ZK-Zhou/spikformer).
 
 ## Repository Structure
 
