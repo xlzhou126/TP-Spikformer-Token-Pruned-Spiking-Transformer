@@ -54,7 +54,7 @@ List all tasks:
 python run.py --list-tasks
 ```
 
-**Default pattern (multi-GPU on one machine):** use `--launcher torchrun` and set `--nproc_per_node` to **how many GPUs** you want on this node (e.g. `4` for four cards, `8` for eight).
+Default pattern (multi-GPU on one machine): use `--launcher torchrun` and set `--nproc_per_node` to the number you want on this node (e.g. `4` for four cards, `8` for eight).
 
 ```bash
 python run.py --task <task-name> --launcher torchrun --nproc_per_node <NUM_GPUS> -- \
@@ -65,8 +65,6 @@ python run.py --task <task-name> --launcher torchrun --nproc_per_node <NUM_GPUS>
 - You can restrict which physical GPUs are visible, then match `nproc_per_node` to that count, for example:  
   `CUDA_VISIBLE_DEVICES=0,1,2,3` with `--nproc_per_node 4`.
 - `run.py` wraps `python -m torch.distributed.run` with the same `nproc_per_node` / `master_port` style knobs as the `torchrun` CLI.
-
-If you omit `--`, remaining args after `--task` are still forwarded, but using `--` before the script args is recommended.
 
 ### Supported tasks
 
