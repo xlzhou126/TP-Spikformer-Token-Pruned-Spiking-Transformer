@@ -1,4 +1,4 @@
-# TP-Spikformer
+# TP-Spikformer: Token Pruned Spiking Transformer
 
 [[Arxiv]](https://arxiv.org/abs/2603.00527)
 
