@@ -96,10 +96,9 @@ python run.py --task qk-train --launcher torchrun --nproc_per_node 8 --master_po
   --data_path /data/dataset/ImageNet \
   --output_dir ./outputs/qkformer \
   --log_dir ./outputs/qkformer \
-  --batch_size 64 \
+  --batch_size 72 \
   --epochs 50 \
-  --blr 5e-5 \
-  --min_lr 1e-7 \
+  --blr 1e-5 \
   --finetune /path/to/checkpoint.pth
 ```
 
@@ -108,7 +107,7 @@ python run.py --task qk-train --launcher torchrun --nproc_per_node 8 --master_po
 ```bash
 python run.py --task qk-eval --launcher torchrun --nproc_per_node 8 --master_port 29502 -- \
   --data_path /data/dataset/ImageNet \
-  --batch_size 64 \
+  --batch_size 72 \
   --model QKFormer_10_768 \
   --resume /path/to/checkpoint.pth \
   --eval
@@ -137,8 +136,8 @@ python run.py --task sdt-eval --launcher torchrun --nproc_per_node 8 --master_po
 
 ```bash
 python run.py --task sdtv3-train --launcher torchrun --nproc_per_node 1 --master_port 29505 -- \
-  --batch_size 64 \
-  --blr 6e-4 \
+  --batch_size 760 \
+  --blr 1e-5 \
   --warmup_epochs 0 \
   --epochs 50 \
   --model Efficient_Spiking_Transformer_l \
@@ -154,7 +153,7 @@ python run.py --task sdtv3-train --launcher torchrun --nproc_per_node 1 --master
 
 ```bash
 python run.py --task sdtv3-eval --launcher torchrun --nproc_per_node 2 --master_port 29506 -- \
-  --batch_size 2 \
+  --batch_size 512 \
   --model Efficient_Spiking_Transformer_l \
   --data_path /data/dataset/ImageNet \
   --eval \
