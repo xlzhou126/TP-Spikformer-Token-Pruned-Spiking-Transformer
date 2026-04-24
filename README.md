@@ -1,6 +1,6 @@
 # TP-Spikformer
 
-[[📄Arxiv Preprint]](https://arxiv.org/abs/2603.00527)
+[[Arxiv]](https://arxiv.org/abs/2603.00527)
 
 This repository provides the official implementation of the paper [TP-Spikformer: Token Pruned Spiking Transformer](https://arxiv.org/abs/2603.00527) (ICLR 2026).
 
