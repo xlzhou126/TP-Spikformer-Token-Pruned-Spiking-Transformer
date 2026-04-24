@@ -34,9 +34,8 @@ TASKS = {
         description="Train SDT drop variant.",
     ),
     "sdt-eval": TaskSpec(
-        script="sdt_drop/train_drop.py",
-        description="Evaluate SDT drop variant (auto adds --eval if missing).",
-        inject_eval_flag=True,
+        script="sdt_drop/firing_num.py",
+        description="Evaluate SDT drop variant.",
     ),
     "sdtv3-train": TaskSpec(
         script="sdtv3_drop/main_finetune.py",

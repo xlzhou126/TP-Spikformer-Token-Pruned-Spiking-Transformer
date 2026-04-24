@@ -127,7 +127,7 @@ python run.py --task sdt-train --launcher torchrun --nproc_per_node 1 --master_p
 
 ```bash
 python run.py --task sdt-eval --launcher torchrun --nproc_per_node 8 --master_port 29504 -- \
-  -c sdt_drop/conf/imagenet/8_512_300E_t4.yml \
+  -c sdt_drop/conf/imagenet/8_768_300E_t4.yml \
   -data-dir /data/dataset/ImageNet \
   --resume /path/to/checkpoint.pth
 ```
